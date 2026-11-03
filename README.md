@@ -1,9 +1,22 @@
-A car rental system API designed to handle all endpoints with exceptions handled.
+# Car Rental System API
 
-Technologies used: Spring Boot, Spring Hiberanate, PostgreSQL
+A Java REST API project for a car-rental system. The application uses Spring Boot, Spring Data JPA and Hibernate for persistence, PostgreSQL, and Swagger-based API documentation. The project also includes exception handling.
 
-Dependencies: Spring Web, Spring Data JPA, Spring Hiberanate, MySQL driver, Lombok API testing done via Postman.
+## Technology
 
-Postman link to test endpoints: [https://web.postman.co/workspace/My-Workspace~97de5a25-ecfd-49f2-88ef-61ba8cb533ad/collection/20162000-1a169236-1b46-40d8-b509-a83c0aeb6946?action=share&creator=20162000&ctx=documentation](https://www.getpostman.com/collections/cef1a9da0b9998047427)
+- Java 8
+- Spring Boot 2.6.6
+- Spring Data JPA and Hibernate
+- PostgreSQL
+- Springfox Swagger
 
-API Documentation: Swagger UI http://localhost:8080/swagger-ui.html
+## Run locally
+
+1. Install Java 8 and PostgreSQL.
+2. Configure the database connection for your local PostgreSQL instance in the application configuration.
+3. Open a terminal in the CarRentalSystem-API folder.
+4. On Windows, run mvnw.cmd spring-boot:run. On macOS or Linux, run ./mvnw spring-boot:run.
+
+When the application is running, the existing Swagger UI is configured at http://localhost:8080/swagger-ui.html.
+
+This is a learning project. Review the application configuration before running it against any database.
