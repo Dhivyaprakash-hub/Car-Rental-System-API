@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.carrentalsystem.customexception.BookingException;
 import com.carrentalsystem.customexception.CustomerException;
@@ -38,21 +39,20 @@ public class BookingService implements BookingServiceInterface {
 	}
 
 	@Override
+	@Transactional
 	public Booking addBooking(String carRegNum, String customerDlNum, Booking booking) throws BookingException, CustomerException {
 
-		CarInventory bookedCar = carInventoryRepository.findById(carRegNum).get();
+		CarInventory bookedCar = carInventoryRepository.findById(carRegNum)
+				.orElseThrow(() -> new BookingException("No car found for registration number."));
 		if (!bookedCar.isCarAvailablity()) {
 			throw new BookingException("The car is already booked.");
 		}
-		List<Customer> allCustomer = customerRepository.findAll();
-		Customer bookedCustomer = customerRepository.findById(customerDlNum).get();
-		if(!CustomerException.checkIfCustomerExist(allCustomer, customerDlNum)) {
-			throw new CustomerException("No customer found for the DL number.") ;
-		}
+		Customer bookedCustomer = customerRepository.findById(customerDlNum)
+				.orElseThrow(() -> new CustomerException("No customer found for the DL number."));
 		Date bookingStartDate = booking.getBookingStartDate();
 		Date bookingEndDate = booking.getBookingEndDate();
-		if(BookingException.validateDates(booking)) {
-			throw new BookingException("Booking start date cannot be after end date");
+		if(bookingStartDate == null || bookingEndDate == null || !bookingStartDate.before(bookingEndDate)) {
+			throw new BookingException("Booking dates are required and the end date must be after the start date.");
 		}
 		booking.setBookingStartDate(bookingStartDate);
 		booking.setBookingEndDate(bookingEndDate);
@@ -60,14 +60,13 @@ public class BookingService implements BookingServiceInterface {
 		booking.setBookedcustomerDlNum(bookedCustomer);
 
 		int carCostPerDay = bookedCar.getCarCostPerDay();
-		long duration = bookingEndDate.getTime() - bookingStartDate.getTime();
-		duration = TimeUnit.MILLISECONDS.toDays(duration);
-
-		int newBookingCost = 0;
-		if (duration == 0) {
-			newBookingCost = booking.getBookedcarRegNum().getCarCostPerDay();
-		} else {
-			newBookingCost = (int) (carCostPerDay * duration);
+		long durationMillis = bookingEndDate.getTime() - bookingStartDate.getTime();
+		long durationDays = Math.max(1, (durationMillis + TimeUnit.DAYS.toMillis(1) - 1) / TimeUnit.DAYS.toMillis(1));
+		int newBookingCost;
+		try {
+			newBookingCost = Math.toIntExact(Math.multiplyExact((long) carCostPerDay, durationDays));
+		} catch (ArithmeticException exception) {
+			throw new BookingException("Booking cost exceeds the supported limit.");
 		}
 		booking.setBookingCost(newBookingCost);
 		bookedCar.setCarAvailablity(false);
